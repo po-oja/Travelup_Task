@@ -1,0 +1,112 @@
+﻿@model IEnumerable<MVC.Models.MVCUserModel>
+
+@*toast css CDN*@
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+<style>
+    /* Customize the toast background color */
+    .toast-success {
+        background-color: #28a745 !important;
+    }
+
+    .toast-error {
+        background-color: #dc3545 !important;
+    }
+
+    .toast-top-center {
+        top: 50px !important;
+        left: 50% !important;
+        transform: translateX(-50%);
+        position: fixed !important;
+    }
+</style>
+
+@{ViewBag.Title = "User Info";
+    var createUrl = Url.Action("Create", "User"); // Create action
+    var deleteUrl = Url.Action("Delete", "User"); // Delete action
+
+}
+
+@*Add User*@
+<h3>User Information</h3>
+<div id="item-form">
+    <h4 style=" color: #4caf50;">Add Users</h4>
+    <form id="addItemForm">
+        <div class="form-group">
+            <label for="Name">Name</label>
+            <input type="text" class="form-control" id="Name" name="Name" required maxlength="50" />
+            <span class="text-danger" id="nameError"></span>
+        </div>
+        <div class="form-group">
+            <label for="Description">Description</label>
+            <textarea class="form-control" id="Description" name="Description" maxlength="100"></textarea>
+            <span class="text-danger" id="descriptionError"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Item</button>
+    </form>
+</div>
+
+<hr />
+
+<div id="itemsList">
+    @Html.Partial("_UserAddPartial", Model)
+</div>
+
+@*toast js CDN*@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#addItemForm').submit(function (e) {
+                toastr.options = {
+                    "positionClass": "toast-top-center",
+                    "closeButton": true,
+                    "timeOut": "3000",
+                    "extendedTimeOut": "1000",
+                };
+                e.preventDefault();
+
+                // Clear previous errors
+                $('#nameError').text('');
+                $('#descriptionError').text('');
+
+                var itemData = {
+                    Name: $('#Name').val(),
+                    Description: $('#Description').val(),
+                    _RequestVerificationToken: $('input[name="_RequestVerificationToken"]').val()
+                };
+
+                $.ajax({
+                    url: '@createUrl',
+                    type: 'POST',
+                    data: JSON.stringify(itemData),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (result) {
+                        if (result.success) {
+                            // Append the new item to the list
+                            $('#itemsList').html(result.html);
+                            // Clear the form
+                            $('#addItemForm')[0].reset();
+                            toastr.success('User added successfully!', 'Success');
+                        } else {
+                            // Display validation errors
+                            if (result.errors.Name) {
+                                $('#nameError').text(result.errors.Name);
+                            }
+                            if (result.errors.Description) {
+                                $('#descriptionError').text(result.errors.Description);
+                            }
+                        }
+                    },
+                    error: function () {
+                        toastr.error('An error occurred while adding the item.', 'Error');
+                    }
+                });
+            });
+        });
+
+
+    </script>
+}
+
